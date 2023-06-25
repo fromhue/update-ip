@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+  updateip:
+    image: update-ip:latest
+    container_name: update-ip
+    restart: unless-stopped
+    networks:
+      nginx_network:
+        ipv4_address: 172.20.0.2
+    environment:
+      - intervalTime=60
+      - domain=yamiannephilim.com
+      - loginToken=YnRAXwL_Ob54ESmxScSeVmM-TKHN3yQK1oeej8_d
+      - subDomains=yamiannephilim.com,true;ssh.yamiannephilim.com,false
+    deploy:
+      resources:
+        limits:
+          memory: 0.5g
+          cpus: '0.5'
+networks:
+  nginx_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

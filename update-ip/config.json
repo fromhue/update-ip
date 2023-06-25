@@ -1,0 +1,7 @@
+﻿{
+  "IntervalTime": 60000,
+  "Endpoint": "https://api.cloudflare.com/client/v4/",
+  "Domain": "yourdomain.com",
+  "LoginToken": "key_",
+  "SubDomains": "yourdomain.com,true;subDomain.yourdomain.com,false"
+}
