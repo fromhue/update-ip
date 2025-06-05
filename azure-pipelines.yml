@@ -1,0 +1,84 @@
+# .azure-pipelines/azure-pipelines.yml
+# Đặt file này trong thư mục .azure-pipelines/ bên trong repo fromhue/update-ip của bạn
+
+trigger:
+- main # Kích hoạt pipeline khi có push vào nhánh 'main'
+
+pool:
+  name: agent_build # Sử dụng Agent Pool mà bạn đã tạo cho server local của mình
+
+variables:
+  # Tên image Docker của ứng dụng bạn sẽ build
+  DOCKER_APP_IMAGE_NAME: update-ip-app
+  # Tag cho image Docker (ví dụ: dùng số build để có tag duy nhất)
+  DOCKER_APP_IMAGE_TAG: '$(Build.BuildId)' # Hoặc có thể dùng '$(Build.SourceVersion)' cho Git SHA
+
+stages:
+- stage: BuildDockerImage
+  displayName: 'Build Application Docker Image'
+  jobs:
+  - job: BuildApp
+    displayName: 'Build and Tag Docker Image'
+    steps:
+    - checkout: self # Checkout mã nguồn từ repository GitHub (fromhue/update-ip)
+
+    - task: CmdLine@2
+      displayName: 'Verify Docker Availability'
+      inputs:
+        script: |
+          echo "Checking Docker and Docker Compose versions..."
+          docker version --format '{{.Server.Version}}'
+          docker compose version
+
+    # Bước 1: Build Docker Image cho ứng dụng của bạn
+    # Dockerfile của bạn nằm ở thư mục gốc của repo
+    - task: Docker@2
+      displayName: 'Build Application Docker Image'
+      inputs:
+        command: build
+        dockerfile: 'Dockerfile' # Đường dẫn đến Dockerfile của ứng dụng (trong thư mục gốc)
+        tags: |
+          $(DOCKER_APP_IMAGE_NAME):$(DOCKER_APP_IMAGE_TAG)
+          $(DOCKER_APP_IMAGE_NAME):latest # Có thể thêm tag latest nếu muốn
+        # buildContext: '$(Build.SourcesDirectory)' # Context là thư mục gốc của repo
+
+- stage: DeployToLocalStack
+  displayName: 'Deploy to Local Docker Swarm'
+  dependsOn: BuildDockerImage # Đảm bảo stage BuildDockerImage hoàn thành trước
+  jobs:
+  - job: DeployApp
+    displayName: 'Deploy to Docker Swarm via Compose'
+    steps:
+    - checkout: self # Cần checkout lại code để có file docker-compose.yml của ứng dụng
+
+    # Bước 2: Triển khai ứng dụng lên Docker Swarm Stack
+    # Chạy trực tiếp trên Self-Hosted Agent vì agent có mount docker.sock
+    - task: CmdLine@2
+      displayName: 'Deploy update-ip to Docker Stack'
+      inputs:
+        script: |
+          echo "Navigating to source directory: $(Build.SourcesDirectory)"
+          cd $(Build.SourcesDirectory)
+
+          echo "Exporting image variables for docker-compose..."
+          # Đảm bảo tên biến ở đây khớp với tên trong docker-compose.yml của bạn
+          export DOCKER_APP_IMAGE_NAME=$(DOCKER_APP_IMAGE_NAME)
+          export DOCKER_APP_IMAGE_TAG=$(DOCKER_APP_IMAGE_TAG)
+
+          echo "Current directory: $(pwd)"
+          echo "Contents:"
+          ls -Fal
+
+          # Kiểm tra xem file docker-compose.yml có tồn tại không
+          if [ ! -f docker-compose.yml ]; then
+            echo "Error: docker-compose.yml not found in $(Build.SourcesDirectory)"
+            exit 1
+          fi
+
+          echo "Deploying Docker stack 'update-ip-stack'..."
+          # Sử dụng docker stack deploy với file docker-compose.yml của ứng dụng
+          # --with-registry-auth chỉ cần nếu bạn kéo image từ private registry.
+          # --force-new-service-tasks để đảm bảo các service được cập nhật với image mới.
+          docker stack deploy -c docker-compose.yml update-ip-stack --force-new-service-tasks
+
+          echo "Deployment initiated. Check 'docker stack ps update-ip-stack' on your master node."
