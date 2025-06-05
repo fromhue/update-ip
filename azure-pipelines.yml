@@ -72,6 +72,6 @@ stages:
           fi
 
           echo "Deploying Docker stack 'update-ip-dotnet-stack'..." # Đổi tên stack để dễ phân biệt
-          docker stack deploy -c docker-compose.yml update-ip-dotnet-stack --force-new-service-tasks
+          docker stack deploy -c docker-compose.yml update-ip-dotnet-stack
 
           echo "Deployment initiated. Check 'docker stack ps update-ip-dotnet-stack' on your master node."
