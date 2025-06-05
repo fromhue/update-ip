@@ -1,6 +1,6 @@
 services:
   update-ip:
-    image: update-ip
+    image: ${DOCKER_APP_IMAGE_NAME}:${DOCKER_APP_IMAGE_TAG}
     container_name: update-ip
     environment:
       - domain=phuongdoan.name.vn
