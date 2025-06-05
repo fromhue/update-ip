@@ -1,17 +1,16 @@
-version: '3.9'
-
 services:
-  updateip:
-    image: ${DOCKER_APP_IMAGE_NAME}:${DOCKER_APP_IMAGE_TAG}
+  update-ip:
+    image: update-ip
     container_name: update-ip
-    restart: unless-stopped
     environment:
+      - domain=phuongdoan.name.vn
+      - subDomains=phuongdoan.name.vn
+      - loginToken=FGHDFEFGH43DFGDG
       - intervalTime=60
-      - domain=yamiannephilim.com
-      - loginToken=YnRAXwL_Ob54ESmxScSeVmM-TKHN3yQK1oeej8_d
-      - subDomains=yamiannephilim.com,true;ssh.yamiannephilim.com,false
     deploy:
+      mode: global
       resources:
         limits:
-          memory: 0.5g
-          cpus: '0.5'
+          cpus: "0.5"
+          memory: 512M
+    restart: always
