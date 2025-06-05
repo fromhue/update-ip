@@ -5,9 +5,6 @@ services:
     image: ${DOCKER_APP_IMAGE_NAME}:${DOCKER_APP_IMAGE_TAG}
     container_name: update-ip
     restart: unless-stopped
-    networks:
-      nginx_network:
-        ipv4_address: 172.20.0.2
     environment:
       - intervalTime=60
       - domain=yamiannephilim.com
@@ -18,10 +15,3 @@ services:
         limits:
           memory: 0.5g
           cpus: '0.5'
-networks:
-  nginx_network:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.20.0.0/16
