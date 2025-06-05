@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   updateip:
-    image: update-ip:latest
+    image: ${DOCKER_APP_IMAGE_NAME}:${DOCKER_APP_IMAGE_TAG}
     container_name: update-ip
     restart: unless-stopped
     networks:
